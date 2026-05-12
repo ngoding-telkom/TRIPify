@@ -14,6 +14,7 @@ abstract class AuthRepository {
     required String username,
     required String password,
   });
+  Future<void> updateEmail({required String userDocId, required String email});
   Future<void> signOut();
 }
 
@@ -112,13 +113,21 @@ class FirestoreAuthRepository implements AuthRepository {
       id: docId,
       userId: nextUserId,
       name: cleanUsername,
-      email: '$normalizedUsername@tripify.local',
+      email: '',
       password: password,
       role: 'user',
     );
     await _users.doc(docId).set(user.toMap());
 
     return user;
+  }
+
+  @override
+  Future<void> updateEmail({
+    required String userDocId,
+    required String email,
+  }) async {
+    await _users.doc(userDocId).update({'email': email.trim()});
   }
 
   @override

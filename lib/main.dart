@@ -57,6 +57,7 @@ class _AppRootState extends State<_AppRoot> {
           if (_signedInUser != null) {
             return HomeScreen(
               currentUser: _signedInUser!,
+              authRepository: _authRepository,
               onLogout: _onLogoutPressed,
             );
           }
@@ -71,6 +72,7 @@ class _AppRootState extends State<_AppRoot> {
           if (restoredUser != null) {
             return HomeScreen(
               currentUser: restoredUser,
+              authRepository: _authRepository,
               onLogout: _onLogoutPressed,
             );
           }
@@ -91,9 +93,20 @@ class _AppRootState extends State<_AppRoot> {
               MaterialPageRoute(
                 builder: (_) => RegisterPage(
                   authRepository: _authRepository,
-                  onRegistered: (user) {
-                    setState(() => _signedInUser = user);
-                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  onRegistered: (_) {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (_) => LoginPage(
+                          authRepository: _authRepository,
+                          onLoggedIn: (user) {
+                            setState(() => _signedInUser = user);
+                            Navigator.of(
+                              context,
+                            ).popUntil((route) => route.isFirst);
+                          },
+                        ),
+                      ),
+                    );
                   },
                 ),
               ),
@@ -117,10 +130,12 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
     required this.currentUser,
+    required this.authRepository,
     required this.onLogout,
   });
 
   final AuthUserModel currentUser;
+  final AuthRepository authRepository;
   final Future<void> Function() onLogout;
 
   @override
@@ -132,6 +147,10 @@ class _HomeScreenState extends State<HomeScreen> {
   final BookingRepository _bookingRepository = FirestoreBookingRepository(
     firestore: FirebaseFirestore.instance,
   );
+  late final TextEditingController _emailController = TextEditingController(
+    text: widget.currentUser.email,
+  );
+  bool _savingEmail = false;
 
   // --- booking form state
   final TextEditingController _originController = TextEditingController(
@@ -189,6 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _originController.dispose();
     _destinationController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
@@ -410,9 +430,52 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 6),
-            Text(
-              widget.currentUser.email,
-              style: const TextStyle(fontSize: 13, color: Color(0xFF666666)),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: 260,
+              child: TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  hintText: 'Masukkan email',
+                  hintStyle: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF9A9A9A),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFFD7D7D7)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFF0451C4)),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: _savingEmail ? null : _saveEmail,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFFCD28),
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: _savingEmail
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Simpan Email'),
             ),
             const SizedBox(height: 18),
             ElevatedButton(
@@ -427,6 +490,43 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _saveEmail() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Masukkan email yang valid.')),
+      );
+      return;
+    }
+
+    setState(() => _savingEmail = true);
+    try {
+      await widget.authRepository.updateEmail(
+        userDocId: widget.currentUser.id,
+        email: email,
+      );
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Email berhasil disimpan.')));
+    } on FirebaseException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal simpan email: ${error.message ?? error.code}'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _savingEmail = false);
+      }
+    }
   }
 
   Widget _buildBookingForm() {
