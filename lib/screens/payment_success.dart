@@ -15,71 +15,149 @@ class PaymentSuccessPage extends StatelessWidget {
     this.seats = const <String>[],
     this.totalPrice = 0,
     this.bookingSequence = 1,
-  }) : ticket = ticket ??
-            TicketModel(
-              id: '',
-              originStation: '-',
-              destinationStation: '-',
-              date: DateTime.now(),
-              train: '-',
-              status: 'available',
-            );
+  }) : ticket =
+           ticket ??
+           TicketModel(
+             id: '',
+             originStation: '-',
+             destinationStation: '-',
+             date: DateTime.now(),
+             train: '-',
+             status: 'available',
+           );
 
   @override
   Widget build(BuildContext context) {
     final seatDisplay = seats.join(', ');
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF0451C4), Color(0xFF0B2ACC), Color(0xFF0A49F7)],
+      backgroundColor: const Color(0xFF0A49F7),
+      body: SizedBox.expand(
+        child: DecoratedBox(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFF0451C4), Color(0xFF0B2ACC), Color(0xFF0A49F7)],
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 14, 24, 28),
-            child: Column(
-              children: [
-                const SizedBox(height: 10),
-                _buildCheckCircle(),
-                const SizedBox(height: 18),
-                const Text(
-                  'Pembayaran Berhasil!',
-                  style: TextStyle(
-                    color: Color(0xFF20FF21),
-                    fontSize: 50 * 0.57,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                _buildTicketCard(context, seatDisplay),
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(
-                      context,
-                    ).popUntil((route) => route.isFirst),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0x80FFFFFF)),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: const Text(
-                      'Kembali ke beranda',
-                      style: TextStyle(
-                        decoration: TextDecoration.underline,
-                        fontSize: 20 * 0.57,
-                      ),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 14, 24, 28),
+              child: Column(
+                children: [
+                  const SizedBox(height: 10),
+                  _buildCheckCircle(),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'Pembayaran Berhasil!',
+                    style: TextStyle(
+                      color: Color(0xFF20FF21),
+                      fontSize: 50 * 0.57,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 18),
+                  _buildTicketCard(context, seatDisplay),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.12),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const Positioned(
+                            left: 0,
+                            right: 0,
+                            top: 0,
+                            child: SizedBox(
+                              height: 1,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.centerLeft,
+                                    end: Alignment.centerRight,
+                                    colors: [
+                                      Color(0x00FFFFFF),
+                                      Color(0xA6FFFFFF),
+                                      Color(0x00FFFFFF),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            child: SizedBox(
+                              height: 1,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.centerLeft,
+                                    end: Alignment.centerRight,
+                                    colors: [
+                                      Color(0x00FFFFFF),
+                                      Color(0x73FFFFFF),
+                                      Color(0x00FFFFFF),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(
+                              context,
+                            ).popUntil((route) => route.isFirst),
+                            style: TextButton.styleFrom(
+                              backgroundColor: const Color(0x2BFFFFFF),
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size.fromHeight(58),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.arrow_back,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
+                                SizedBox(width: 12),
+                                Text(
+                                  'Kembali ke beranda',
+                                  style: TextStyle(
+                                    decoration: TextDecoration.underline,
+                                    decorationColor: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

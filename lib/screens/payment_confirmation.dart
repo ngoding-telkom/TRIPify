@@ -10,12 +10,14 @@ class PaymentConfirmationPage extends StatefulWidget {
     required this.ticket,
     required this.selectedSeats,
     required this.passengers,
+    required this.userId,
     required this.bookingRepository,
   });
 
   final TicketModel ticket;
   final List<String> selectedSeats;
   final int passengers;
+  final String userId;
   final BookingRepository bookingRepository;
 
   @override
@@ -242,7 +244,7 @@ class _PaymentConfirmationPageState extends State<PaymentConfirmationPage> {
     setState(() => _paying = true);
     try {
       await widget.bookingRepository.bookSeats(
-        userId: '1',
+        userId: widget.userId,
         ticketId: widget.ticket.id,
         seatNumbers: widget.selectedSeats,
       );

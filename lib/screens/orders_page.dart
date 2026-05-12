@@ -10,10 +10,12 @@ class OrdersPage extends StatelessWidget {
   const OrdersPage({
     super.key,
     required this.bookingRepository,
+    required this.userId,
     required this.onBackToHome,
   });
 
   final BookingRepository bookingRepository;
+  final String userId;
   final VoidCallback onBackToHome;
 
   @override
@@ -27,13 +29,20 @@ class OrdersPage extends StatelessWidget {
             onHistoryTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) =>
-                      BookingHistoryPage(bookingRepository: bookingRepository),
+                  builder: (_) => BookingHistoryPage(
+                    bookingRepository: bookingRepository,
+                    userId: userId,
+                  ),
                 ),
               );
             },
           ),
-          Expanded(child: _OrdersList(bookingRepository: bookingRepository)),
+          Expanded(
+            child: _OrdersList(
+              bookingRepository: bookingRepository,
+              userId: userId,
+            ),
+          ),
         ],
       ),
     );
@@ -99,14 +108,15 @@ class _OrdersHeader extends StatelessWidget {
 }
 
 class _OrdersList extends StatelessWidget {
-  const _OrdersList({required this.bookingRepository});
+  const _OrdersList({required this.bookingRepository, required this.userId});
 
   final BookingRepository bookingRepository;
+  final String userId;
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<BookingModel>>(
-      stream: bookingRepository.watchUserBookings(userId: '1'),
+      stream: bookingRepository.watchUserBookings(userId: userId),
       builder: (context, bookingsSnapshot) {
         if (bookingsSnapshot.hasError) {
           return _CenteredInfo(

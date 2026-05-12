@@ -6,9 +6,14 @@ import '../data/repositories/firestore_booking_repository.dart';
 import '../widgets/e_ticket_overlay.dart';
 
 class BookingHistoryPage extends StatelessWidget {
-  const BookingHistoryPage({super.key, required this.bookingRepository});
+  const BookingHistoryPage({
+    super.key,
+    required this.bookingRepository,
+    required this.userId,
+  });
 
   final BookingRepository bookingRepository;
+  final String userId;
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +22,12 @@ class BookingHistoryPage extends StatelessWidget {
       body: Column(
         children: [
           const _HistoryHeader(),
-          Expanded(child: _HistoryList(bookingRepository: bookingRepository)),
+          Expanded(
+            child: _HistoryList(
+              bookingRepository: bookingRepository,
+              userId: userId,
+            ),
+          ),
         ],
       ),
     );
@@ -63,14 +73,15 @@ class _HistoryHeader extends StatelessWidget {
 }
 
 class _HistoryList extends StatelessWidget {
-  const _HistoryList({required this.bookingRepository});
+  const _HistoryList({required this.bookingRepository, required this.userId});
 
   final BookingRepository bookingRepository;
+  final String userId;
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<BookingModel>>(
-      stream: bookingRepository.watchUserBookings(userId: '1'),
+      stream: bookingRepository.watchUserBookings(userId: userId),
       builder: (context, bookingsSnapshot) {
         if (bookingsSnapshot.hasError) {
           return _CenteredInfo(
@@ -210,7 +221,25 @@ class _HistoryBookingCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    _HistoryStatusBadge(status: booking.status),
+                    Row(
+                      children: [
+                        _HistoryStatusBadge(status: booking.status),
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: () => _deleteBooking(context),
+                          borderRadius: BorderRadius.circular(14),
+                          child: const SizedBox(
+                            width: 26,
+                            height: 26,
+                            child: Icon(
+                              Icons.delete_outline,
+                              size: 20,
+                              color: Color(0xFFE63131),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
                 const SizedBox(height: 14),
@@ -361,6 +390,42 @@ class _HistoryBookingCard extends StatelessWidget {
       ).showSnackBar(SnackBar(content: Text('Gagal membuka e-ticket: $error')));
     }
   }
+
+  Future<void> _deleteBooking(BuildContext context) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Hapus riwayat booking?'),
+          content: const Text('Data booking ini akan dihapus permanen.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Hapus'),
+            ),
+          ],
+        );
+      },
+    );
+    if (shouldDelete != true) {
+      return;
+    }
+
+    try {
+      await bookingRepository.deleteBooking(bookingId: booking.id);
+    } catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal hapus booking: $error')));
+    }
+  }
 }
 
 class _HistoryStatusBadge extends StatelessWidget {
@@ -411,23 +476,29 @@ class _RouteBlock extends StatelessWidget {
     final crossAxis = alignRight
         ? CrossAxisAlignment.end
         : CrossAxisAlignment.start;
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: crossAxis,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 13,
-            color: Color.fromRGBO(0, 0, 0, 0.5),
+    return SizedBox(
+      width: 102,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: crossAxis,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color.fromRGBO(0, 0, 0, 0.5),
+            ),
           ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          station.toUpperCase(),
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
-        ),
-      ],
+          const SizedBox(height: 2),
+          Text(
+            station.toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: alignRight ? TextAlign.right : TextAlign.left,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
     );
   }
 }

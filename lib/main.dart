@@ -5,10 +5,15 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'data/models/ticket_model.dart';
+import 'data/models/user_model.dart';
+import 'data/repositories/firestore_auth_repository.dart';
 import 'data/repositories/firestore_booking_repository.dart';
 import 'firebase_options.dart';
+import 'screens/auth_choice_page.dart';
 import 'screens/debug_tools.dart';
+import 'screens/login_page.dart';
 import 'screens/orders_page.dart';
+import 'screens/register_page.dart';
 import 'screens/search_results.dart';
 
 Future<void> main() async {
@@ -22,16 +27,101 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return const _AppRoot();
+  }
+}
+
+class _AppRoot extends StatefulWidget {
+  const _AppRoot();
+
+  @override
+  State<_AppRoot> createState() => _AppRootState();
+}
+
+class _AppRootState extends State<_AppRoot> {
+  late final AuthRepository _authRepository = FirestoreAuthRepository(
+    firestore: FirebaseFirestore.instance,
+  );
+  late final Future<AuthUserModel?> _restoredUserFuture = _authRepository
+      .restoreRememberedUser();
+  AuthUserModel? _signedInUser;
+
+  @override
+  Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Tripify',
       theme: ThemeData(useMaterial3: true, primarySwatch: Colors.blue),
-      home: const HomeScreen(),
+      home: FutureBuilder<AuthUserModel?>(
+        future: _restoredUserFuture,
+        builder: (context, snapshot) {
+          if (_signedInUser != null) {
+            return HomeScreen(
+              currentUser: _signedInUser!,
+              onLogout: _onLogoutPressed,
+            );
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          final restoredUser = snapshot.data;
+          if (restoredUser != null) {
+            return HomeScreen(
+              currentUser: restoredUser,
+              onLogout: _onLogoutPressed,
+            );
+          }
+
+          return AuthChoicePage(
+            onLoginPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => LoginPage(
+                  authRepository: _authRepository,
+                  onLoggedIn: (user) {
+                    setState(() => _signedInUser = user);
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+                ),
+              ),
+            ),
+            onRegisterPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => RegisterPage(
+                  authRepository: _authRepository,
+                  onRegistered: (user) {
+                    setState(() => _signedInUser = user);
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
+  }
+
+  Future<void> _onLogoutPressed() async {
+    await _authRepository.signOut();
+    if (!mounted) {
+      return;
+    }
+    setState(() => _signedInUser = null);
   }
 }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({
+    super.key,
+    required this.currentUser,
+    required this.onLogout,
+  });
+
+  final AuthUserModel currentUser;
+  final Future<void> Function() onLogout;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -117,6 +207,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             OrdersPage(
               bookingRepository: _bookingRepository,
+              userId: widget.currentUser.id,
               onBackToHome: () => setState(() => _selectedNavIndex = 0),
             ),
             _buildBottomNavBar(bottomInset),
@@ -179,9 +270,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
-                                'Mr. Kamil',
-                                style: TextStyle(
+                              Text(
+                                widget.currentUser.name,
+                                style: const TextStyle(
                                   color: Colors.white70,
                                   fontSize: 14,
                                 ),
@@ -304,12 +395,35 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildProfilePlaceholder() {
-    return const ColoredBox(
+    return ColoredBox(
       color: Color(0xFFF4F1F1),
       child: Center(
-        child: Text(
-          'Profil akan hadir segera',
-          style: TextStyle(fontSize: 16, color: Color(0xFF666666)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              widget.currentUser.name,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF242424),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              widget.currentUser.email,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF666666)),
+            ),
+            const SizedBox(height: 18),
+            ElevatedButton(
+              onPressed: () => widget.onLogout(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFBD146),
+                foregroundColor: Colors.black,
+              ),
+              child: const Text('Logout'),
+            ),
+          ],
         ),
       ),
     );
@@ -611,6 +725,7 @@ class _HomeScreenState extends State<HomeScreen> {
           destination: _destinationController.text,
           date: _selectedDate,
           passengers: _passengers,
+          userId: widget.currentUser.id,
           bookingRepository: _bookingRepository,
         ),
       ),

@@ -4,13 +4,14 @@ import '../data/models/ticket_model.dart';
 import '../data/repositories/firestore_booking_repository.dart';
 import 'seat_selection.dart';
 
-class SearchResultsPage extends StatelessWidget {
+class SearchResultsPage extends StatefulWidget {
   const SearchResultsPage({
     super.key,
     required this.origin,
     required this.destination,
     required this.date,
     required this.passengers,
+    required this.userId,
     required this.bookingRepository,
   });
 
@@ -18,7 +19,64 @@ class SearchResultsPage extends StatelessWidget {
   final String destination;
   final DateTime date;
   final int passengers;
+  final String userId;
   final BookingRepository bookingRepository;
+
+  @override
+  State<SearchResultsPage> createState() => _SearchResultsPageState();
+}
+
+class _SearchResultsPageState extends State<SearchResultsPage> {
+  late String _origin;
+  late String _destination;
+
+  static const List<String> _indonesianStations = [
+    'Jakarta (CGK)',
+    'Bandung (BD)',
+    'Surabaya (SBY)',
+    'Yogyakarta (YIA)',
+    'Medan (KNO)',
+    'Semarang (SRG)',
+    'Makassar (UPG)',
+    'Denpasar (DPS)',
+    'Palembang (PLM)',
+    'Balikpapan (BPN)',
+    'Banjarmasin (BJM)',
+    'Jambi (JSM)',
+    'Riau (PKU)',
+    'Padang (PDG)',
+    'Pontianak (PNK)',
+    'Samarinda (SRI)',
+    'Kupang (KOE)',
+    'Manado (MDC)',
+    'Bandarlampung (TKG)',
+    'Malang (MLG)',
+    'Solo (SLO)',
+    'Sleman (SLM)',
+    'Kediri (KDI)',
+    'Jombang (JMB)',
+    'Gresik (GSK)',
+    'Tuban (TBN)',
+    'Cilacap (CLP)',
+    'Purwokerto (PWK)',
+    'Pekalongan (PKL)',
+    'Tegal (TGL)',
+    'Cirebon (CRB)',
+    'Indramayu (IDM)',
+    'Karawang (KRW)',
+    'Bekasi (BKS)',
+    'Depok (DPK)',
+    'Tangerang (TNG)',
+    'Serang (SRG)',
+    'Bogor (BGR)',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _origin = widget.origin;
+    _destination = widget.destination;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,71 +123,103 @@ class SearchResultsPage extends StatelessWidget {
                       Row(
                         children: [
                           Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 10,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Dari',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey,
-                                      fontWeight: FontWeight.w500,
+                            child: InkWell(
+                              onTap: () => _editStation(isOrigin: true),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Dari',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    origin,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black,
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            _origin,
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        const Icon(
+                                          Icons.edit_location_alt_outlined,
+                                          size: 14,
+                                          color: Color(0xFF666666),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 10,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Menuju',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey,
-                                      fontWeight: FontWeight.w500,
+                            child: InkWell(
+                              onTap: () => _editStation(isOrigin: false),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Menuju',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    destination,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black,
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            _destination,
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        const Icon(
+                                          Icons.edit_location_alt_outlined,
+                                          size: 14,
+                                          color: Color(0xFF666666),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -146,7 +236,7 @@ class SearchResultsPage extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: StreamBuilder<List<TicketModel>>(
-                stream: bookingRepository.watchAvailableTickets(),
+                stream: widget.bookingRepository.watchAvailableTickets(),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return Center(
@@ -162,18 +252,14 @@ class SearchResultsPage extends StatelessWidget {
                       .where((t) {
                         final sameOrigin = t.originStation
                             .toLowerCase()
-                            .contains(
-                              origin.toLowerCase().split('(').first.trim(),
-                            );
+                            .contains(_normalizedStationQuery(_origin));
                         final sameDest = t.destinationStation
                             .toLowerCase()
-                            .contains(
-                              destination.toLowerCase().split('(').first.trim(),
-                            );
+                            .contains(_normalizedStationQuery(_destination));
                         final sameDate =
-                            t.date.year == date.year &&
-                            t.date.month == date.month &&
-                            t.date.day == date.day;
+                            t.date.year == widget.date.year &&
+                            t.date.month == widget.date.month &&
+                            t.date.day == widget.date.day;
                         return sameOrigin && sameDest && sameDate;
                       })
                       .toList(growable: false);
@@ -218,8 +304,9 @@ class SearchResultsPage extends StatelessWidget {
           MaterialPageRoute(
             builder: (_) => SeatSelectionPage(
               ticket: ticket,
-              passengers: passengers,
-              bookingRepository: bookingRepository,
+              passengers: widget.passengers,
+              userId: widget.userId,
+              bookingRepository: widget.bookingRepository,
             ),
           ),
         );
@@ -413,5 +500,146 @@ class SearchResultsPage extends StatelessWidget {
       (match) => '.',
     );
     return 'IDR $formatted';
+  }
+
+  Future<void> _editStation({required bool isOrigin}) async {
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (context) => _StationPickerDialog(
+        stations: _indonesianStations,
+        title: isOrigin ? 'Pilih Stasiun Asal' : 'Pilih Stasiun Tujuan',
+      ),
+    );
+    if (selected == null) {
+      return;
+    }
+    setState(() {
+      if (isOrigin) {
+        _origin = selected;
+      } else {
+        _destination = selected;
+      }
+    });
+  }
+
+  String _normalizedStationQuery(String rawStation) {
+    return rawStation.toLowerCase().split('(').first.trim();
+  }
+}
+
+class _StationPickerDialog extends StatefulWidget {
+  const _StationPickerDialog({required this.stations, required this.title});
+
+  final List<String> stations;
+  final String title;
+
+  @override
+  State<_StationPickerDialog> createState() => _StationPickerDialogState();
+}
+
+class _StationPickerDialogState extends State<_StationPickerDialog> {
+  late List<String> _filteredStations;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredStations = widget.stations;
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterStations(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredStations = widget.stations;
+      } else {
+        _filteredStations = widget.stations
+            .where(
+              (station) => station.toLowerCase().contains(query.toLowerCase()),
+            )
+            .toList(growable: false);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: SizedBox(
+        width: 420,
+        height: 470,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _searchController,
+                    onChanged: _filterStations,
+                    decoration: InputDecoration(
+                      hintText: 'Cari stasiun...',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: _filteredStations.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'Stasiun tidak ditemukan',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: _filteredStations.length,
+                      itemBuilder: (context, index) {
+                        final station = _filteredStations[index];
+                        return ListTile(
+                          title: Text(station),
+                          onTap: () => Navigator.of(context).pop(station),
+                        );
+                      },
+                    ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(null),
+                  child: const Text('Batal'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

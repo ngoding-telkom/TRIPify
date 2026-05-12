@@ -9,11 +9,13 @@ class SeatSelectionPage extends StatefulWidget {
     super.key,
     required this.ticket,
     required this.passengers,
+    required this.userId,
     required this.bookingRepository,
   });
 
   final TicketModel ticket;
   final int passengers;
+  final String userId;
   final BookingRepository bookingRepository;
 
   @override
@@ -324,6 +326,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
           ticket: widget.ticket,
           selectedSeats: seats,
           passengers: widget.passengers,
+          userId: widget.userId,
           bookingRepository: widget.bookingRepository,
         ),
       ),
