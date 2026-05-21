@@ -30,22 +30,12 @@ class AuthChoicePage extends StatelessWidget {
               ),
             ),
           ),
-          const Positioned(
-            top: 112,
-            right: 22,
-            child: _GlowBlob(size: 108, color: Color(0xFF2F0FFF)),
-          ),
-          const Positioned(
-            top: 236,
-            left: -34,
-            child: _GlowBlob(size: 84, color: Color(0xFF2C63FF)),
-          ),
           SafeArea(
             child: Column(
               children: [
                 const Spacer(),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 52),
+                  padding: const EdgeInsets.symmetric(horizontal: 95),
                   child: Image.asset(
                     'assets/images/logo_big.png',
                     fit: BoxFit.fitWidth,

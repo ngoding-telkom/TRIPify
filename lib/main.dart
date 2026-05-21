@@ -49,6 +49,7 @@ class _AppRootState extends State<_AppRoot> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Tripify',
       theme: ThemeData(useMaterial3: true, primarySwatch: Colors.blue),
       home: FutureBuilder<AuthUserModel?>(
@@ -859,8 +860,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               }
 
+              final today = DateTime.now();
+              final todayDate = DateTime(today.year, today.month, today.day);
               final tickets = (snapshot.data ?? const <TicketModel>[])
                   .where((ticket) => ticket.oldPrice != null)
+                  .where((ticket) {
+                    final t = ticket.date;
+                    final ticketDate = DateTime(t.year, t.month, t.day);
+                    return ticketDate == todayDate &&
+                        ticket.status == 'available';
+                  })
                   .toList(growable: false);
               if (tickets.isEmpty) {
                 return const Padding(

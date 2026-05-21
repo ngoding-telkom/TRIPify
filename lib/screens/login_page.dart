@@ -58,7 +58,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
-                    Column(
+          Column(
             children: [
               SizedBox(height: topInset + 18),
               Padding(
@@ -83,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 38),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 84),
+                padding: const EdgeInsets.symmetric(horizontal: 120),
                 child: Image.asset(
                   'assets/images/logo_big.png',
                   fit: BoxFit.fitWidth,
