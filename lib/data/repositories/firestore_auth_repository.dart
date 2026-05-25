@@ -14,7 +14,19 @@ abstract class AuthRepository {
     required String username,
     required String password,
   });
-  Future<void> updateEmail({required String userDocId, required String email});
+  Stream<List<AuthUserModel>> watchUsers();
+  Future<void> updateUserRole({
+    required String userDocId,
+    required String role,
+  });
+  Future<void> deleteUser({required String userDocId});
+  Future<void> updateProfile({
+    required String userDocId,
+    required String name,
+    required String email,
+    String? password,
+    String? photoUrl,
+  });
   Future<void> signOut();
 }
 
@@ -123,11 +135,52 @@ class FirestoreAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> updateEmail({
+  Stream<List<AuthUserModel>> watchUsers() {
+    return _users
+        .orderBy('userId')
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map(AuthUserModel.fromFirestore)
+              .toList(growable: false),
+        );
+  }
+
+  @override
+  Future<void> updateUserRole({
     required String userDocId,
+    required String role,
+  }) {
+    return _users.doc(userDocId).update({'role': role});
+  }
+
+  @override
+  Future<void> deleteUser({required String userDocId}) {
+    return _users.doc(userDocId).delete();
+  }
+
+  @override
+  Future<void> updateProfile({
+    required String userDocId,
+    required String name,
     required String email,
+    String? password,
+    String? photoUrl,
   }) async {
-    await _users.doc(userDocId).update({'email': email.trim()});
+    final cleanName = name.trim();
+    final cleanEmail = email.trim();
+    final payload = <String, dynamic>{
+      'name': cleanName,
+      'email': cleanEmail,
+      'usernameKey': cleanName.toLowerCase(),
+    };
+    if (password != null && password.isNotEmpty) {
+      payload['password'] = password;
+    }
+    if (photoUrl != null) {
+      payload['photoUrl'] = photoUrl;
+    }
+    await _users.doc(userDocId).update(payload);
   }
 
   @override

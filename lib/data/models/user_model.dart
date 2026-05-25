@@ -8,6 +8,7 @@ class AuthUserModel {
     required this.email,
     required this.password,
     required this.role,
+    this.photoUrl,
   });
 
   final String id;
@@ -16,6 +17,7 @@ class AuthUserModel {
   final String email;
   final String password;
   final String role;
+  final String? photoUrl;
 
   factory AuthUserModel.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> document,
@@ -28,6 +30,7 @@ class AuthUserModel {
       email: (data['email'] as String?) ?? '',
       password: (data['password'] as String?) ?? '',
       role: (data['role'] as String?) ?? 'user',
+      photoUrl: data['photoUrl'] as String?,
     );
   }
 
@@ -39,6 +42,7 @@ class AuthUserModel {
       'password': password,
       'role': role,
       'usernameKey': name.toLowerCase(),
+      if (photoUrl != null && photoUrl!.isNotEmpty) 'photoUrl': photoUrl,
     };
   }
 

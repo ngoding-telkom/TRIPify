@@ -12,6 +12,8 @@ dependencies:
   cloud_firestore: ^6.0.3
   firebase_core: ^4.1.0
   shared_preferences: ^2.5.3
+  http: ^1.2.0
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:

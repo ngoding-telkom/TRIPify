@@ -60,11 +60,18 @@ abstract class BookingRepository {
 
   Future<void> deleteTicket({required String ticketId});
 
+  Future<BookingModel> getBooking({required String bookingId});
+
   Future<int> getBookingSequence({required String bookingId});
 
   Future<void> verifyAllPending({
     required String userId,
     required String ticketId,
+  });
+
+  Future<int> updateBookingStatusByCode({
+    required String code,
+    required String status,
   });
 }
 
@@ -285,9 +292,18 @@ class FirestoreBookingRepository implements BookingRepository {
       (document) => document.id == bookingId,
     );
     if (index < 0) {
-      throw StateError('Booking not found for sequence: $bookingId');
+      throw StateError('Booking tidak ditemukan.');
     }
     return index + 1;
+  }
+
+  @override
+  Future<BookingModel> getBooking({required String bookingId}) async {
+    final snapshot = await _bookings.doc(bookingId).get();
+    if (!snapshot.exists) {
+      throw StateError('Booking tidak ditemukan.');
+    }
+    return BookingModel.fromFirestore(snapshot);
   }
 
   @override
@@ -310,6 +326,91 @@ class FirestoreBookingRepository implements BookingRepository {
         transaction.update(booking.reference, {'status': 'completed'});
       }
     });
+  }
+
+  @override
+  Future<int> updateBookingStatusByCode({
+    required String code,
+    required String status,
+  }) async {
+    final sequence = _parseBookingSequence(code);
+    if (sequence == null) {
+      throw StateError('Kode tiket tidak valid.');
+    }
+
+    final bookingDoc = await _getBookingDocBySequence(sequence);
+    final booking = BookingModel.fromFirestore(bookingDoc);
+
+    List<DocumentSnapshot<Map<String, dynamic>>> docs = [];
+    final groupId = booking.bookingGroupId;
+    if (groupId != null && groupId.isNotEmpty) {
+      final groupSnapshot = await _bookings
+          .where('bookingGroupId', isEqualTo: groupId)
+          .get();
+      docs = [...groupSnapshot.docs];
+    } else {
+      docs = [bookingDoc];
+    }
+
+    final batch = _firestore.batch();
+    var updatedCount = 0;
+    for (final booking in docs) {
+      final data = booking.data();
+      final currentStatus = (data?['status'] as String?) ?? '';
+      if (!_shouldUpdateStatus(currentStatus, status)) {
+        continue;
+      }
+      batch.update(booking.reference, {'status': status});
+      updatedCount += 1;
+    }
+
+    if (updatedCount == 0) {
+      throw StateError('Tidak ada booking yang bisa diupdate.');
+    }
+
+    await batch.commit();
+    return updatedCount;
+  }
+
+  bool _shouldUpdateStatus(String current, String next) {
+    final normalizedCurrent = current.toLowerCase();
+    final normalizedNext = next.toLowerCase();
+    if (normalizedNext == 'confirmed') {
+      return normalizedCurrent == 'pending';
+    }
+    if (normalizedNext == 'cancelled') {
+      return normalizedCurrent == 'pending' || normalizedCurrent == 'confirmed';
+    }
+    return normalizedCurrent != normalizedNext;
+  }
+
+  int? _parseBookingSequence(String code) {
+    final trimmed = code.trim();
+    if (trimmed.isEmpty) {
+      return null;
+    }
+    final prefix = RegExp(r'^trp-', caseSensitive: false);
+    final stripped = prefix.hasMatch(trimmed)
+        ? trimmed.substring(4).trim()
+        : trimmed;
+    final sequence = int.tryParse(stripped);
+    if (sequence == null || sequence < 1) {
+      return null;
+    }
+    return sequence;
+  }
+
+  Future<DocumentSnapshot<Map<String, dynamic>>> _getBookingDocBySequence(
+    int sequence,
+  ) async {
+    final snapshot = await _bookings
+        .orderBy('createdAt')
+        .orderBy(FieldPath.documentId)
+        .get();
+    if (sequence < 1 || sequence > snapshot.docs.length) {
+      throw StateError('Kode tiket tidak ditemukan.');
+    }
+    return snapshot.docs[sequence - 1];
   }
 
   Future<List<BookingModel>> _resolveExpiredBookingStatuses(

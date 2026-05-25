@@ -144,25 +144,3 @@ class AuthChoicePage extends StatelessWidget {
     );
   }
 }
-
-class _GlowBlob extends StatelessWidget {
-  const _GlowBlob({required this.size, required this.color});
-
-  final double size;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(size),
-        boxShadow: [
-          BoxShadow(color: color.withValues(alpha: 0.55), blurRadius: 42),
-        ],
-      ),
-    );
-  }
-}
